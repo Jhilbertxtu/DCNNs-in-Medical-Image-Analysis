@@ -34,7 +34,7 @@ from keras.optimizers import SGD, Adam
 from keras.utils import plot_model
 import sys
 
-np.random.seed(0)
+# np.random.seed(0)
 
 def train_and_predict(use_existing):
 
@@ -42,13 +42,13 @@ def train_and_predict(use_existing):
   cm.mkdir(cm.workingPath.best_model_path)
   cm.mkdir(cm.workingPath.visual_path)
 
-  learning_rate = 0.00001
-
-  adam = Adam(lr=learning_rate)
-
-  opti = adam
-
-  lrate = callbacks.LearningRateScheduler(cb.step_decay)
+  # learning_rate = 0.00001
+  #
+  # adam = Adam(lr=learning_rate)
+  #
+  # opti = adam
+  #
+  # lrate = callbacks.LearningRateScheduler(cb.step_decay)
 
   print('-' * 30)
   print('Loading and preprocessing train data...')
@@ -59,8 +59,11 @@ def train_and_predict(use_existing):
   mask_list = sorted(glob(cm.workingPath.trainingPatchesSet_path + 'mask_*.npy'))
 
   # Scanning validation data list:
-  originValFile_list = sorted(glob(cm.workingPath.validationPatchesSet_path + 'img_*.npy'))
-  maskVal_list = sorted(glob(cm.workingPath.validationPatchesSet_path + 'mask_*.npy'))
+  originValFile_list = sorted(glob(cm.workingPath.validationSet_path + 'valImages.npy'))
+  maskVal_list = sorted(glob(cm.workingPath.validationSet_path + 'valMasks.npy'))
+
+  x_val = np.load(originValFile_list[0])
+  y_val = np.load(maskVal_list[0])
 
   # Calculate the total amount of training sets:
   nb_file = int(len(originFile_list))
@@ -81,9 +84,9 @@ def train_and_predict(use_existing):
   # model = nw.get_3D_unet()
   # model = nw.get_3D_Eunet()
   # model = DenseUNet_3D.get_3d_denseunet()
-  # model = UNet_3D.get_3d_unet(opti)
+  model = UNet_3D.get_3d_unet()
   # model = RSUNet_3D.get_3d_rsunet(opti)
-  model = RSUNet_3D_Gerda.get_3d_rsunet_Gerdafeature(opti)
+  # model = RSUNet_3D_Gerda.get_3d_rsunet_Gerdafeature(opti)
 
   # Plot the model:
   modelname = 'model.png'
@@ -99,14 +102,6 @@ def train_and_predict(use_existing):
   print('-' * 30)
 
   nb_epoch = 4000
-
-  x_val = np.ndarray([nb_val_file*cm.nb_batch_size, cm.slices_3d, cm.img_rows_3d, cm.img_cols_3d, 1], dtype=np.int16)
-  y_val = np.ndarray([nb_val_file*cm.nb_batch_size, cm.slices_3d, cm.img_rows_3d, cm.img_cols_3d, 3], dtype=np.int16)
-
-  for i in range(nb_val_file):
-
-    x_val[i*cm.nb_batch_size : ((i+1)*cm.nb_batch_size)] = np.load(originValFile_list[i])
-    y_val[i*cm.nb_batch_size : ((i+1)*cm.nb_batch_size)] = np.load(maskVal_list[i])
 
   temp_weights = model.get_weights()
 
@@ -128,14 +123,14 @@ def train_and_predict(use_existing):
       if i == (train_num-1):
 
         model.set_weights(temp_weights)
-        model.fit(x_train, y_train, batch_size=2, epochs=1, verbose=1, validation_data=(x_val, y_val),
+        model.fit(x_train, y_train, batch_size=1, epochs=1, verbose=1, validation_data=(x_val, y_val),
                   callbacks=callbacks_list)
         temp_weights = model.get_weights()
 
       else:
 
         model.set_weights(temp_weights)
-        model.fit(x_train, y_train, batch_size=2, epochs=1, verbose=1)
+        model.fit(x_train, y_train, batch_size=1, epochs=1, verbose=1)
         temp_weights = model.get_weights()
 
   print('training finished')

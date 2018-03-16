@@ -30,6 +30,7 @@ from keras import callbacks
 from keras.optimizers import SGD, Adam
 from keras.utils import plot_model
 import sys
+from Prototypes.ManyFilesBatchGenerator import *
 
 
 img_rows = cm.img_rows_3d
@@ -87,13 +88,11 @@ def train_and_predict(use_existing):
 
   imgs_train = np.load(cm.workingPath.home_path + 'trainImages3D16.npy')
   imgs_mask_train = np.load(cm.workingPath.home_path + 'trainMasks3D16.npy')
-  # imgs_train = np.load(cm.workingPath.home_path + 'trainImages3Dtest.npy')
-  # imgs_mask_train = np.load(cm.workingPath.home_path + 'trainMasks3Dtest.npy')
-  # imgs_val = np.load(cm.workingPath.validationSet_path + 'valImages3D.npy')
-  # imgs_mask_val = np.load(cm.workingPath.validationSet_path + 'valMasks3D.npy')
+  # imgs_train = np.load(cm.workingPath.trainingPatchesSet_path + 'img_0000.npy')
+  # imgs_mask_train = np.load(cm.workingPath.trainingPatchesSet_path + 'mask_0000.npy')
+  x_val = np.load(cm.workingPath.validationSet_path + 'valImages.npy')
+  y_val = np.load(cm.workingPath.validationSet_path + 'valMasks.npy')
 
-  # imgs_train = np.load(cm.workingPath.training3DSet_path + 'trainImages_0000.npy')
-  # imgs_mask_train = np.load(cm.workingPath.training3DSet_path + 'trainMasks_0000.npy')
 
   print('_' * 30)
   print('Creating and compiling model...')
@@ -102,7 +101,8 @@ def train_and_predict(use_existing):
   # model = nw.get_3D_unet()
   # model = nw.get_3D_Eunet()
   # model = DenseUNet_3D.get_3d_denseunet()
-  model = UNet_3D.get_3d_unet(opti)
+  model = UNet_3D.get_3d_unet()
+  # model = UNet_3D.get_3d_wnet(opti)
   # model = RSUNet_3D.get_3d_rsunet(opti)
 
   modelname = 'model.png'
@@ -110,8 +110,8 @@ def train_and_predict(use_existing):
   model.summary()
 
   # Callbacks:
-  filepath = cm.workingPath.model_path + 'weights.{epoch:02d}-{loss:.5f}.hdf5'
-  bestfilepath = cm.workingPath.model_path + 'Best_weights.{epoch:02d}-{loss:.5f}.hdf5'
+  filepath = cm.workingPath.model_path + 'weights.{epoch:02d}-{loss:.5f}-{val_loss:.5f}.hdf5'
+  bestfilepath = cm.workingPath.model_path + 'Best_weights.{epoch:02d}-{loss:.5f}-{val_loss:.5f}.hdf5'
 
   model_checkpoint = callbacks.ModelCheckpoint(filepath, monitor='val_loss', verbose=0, save_best_only=False)
   model_best_checkpoint = callbacks.ModelCheckpoint(bestfilepath, monitor='val_loss', verbose=0, save_best_only=True)
@@ -121,7 +121,7 @@ def train_and_predict(use_existing):
   # model_history = callbacks.TensorBoard(log_dir='./logs', histogram_freq=1, write_graph=True, write_images=True,
   #  							embeddings_freq=1, embeddings_layer_names=None, embeddings_metadata= None)
 
-  callbacks_list = [history, record_history, lrate, model_best_checkpoint]
+  callbacks_list = [record_history, model_best_checkpoint]
 
   # Should we load existing weights?
   # Set argument for call to train_and_predict to true at end of script
@@ -132,21 +132,13 @@ def train_and_predict(use_existing):
   print('Fitting model...')
   print('-' * 30)
 
+  print(imgs_train.shape)
+  print(imgs_mask_train.shape)
+
   model.fit(imgs_train, imgs_mask_train, batch_size=1, epochs=4000, verbose=1, shuffle=True,
-            validation_split=0.1, callbacks=callbacks_list)
+            validation_data=(x_val, y_val), callbacks=callbacks_list)
 
   print('training finished')
-
-
-# for e in range(nb_epoch):
-#     print("epoch %d" % e)
-#     for i, (X_train, Y_train) in enumerate(BatchGenerator()):
-#
-#     if( i==last )
-#         callbacks
-#         model.fit(X_batch, Y_batch, batch_size=32, nb_epoch=1, callbacks=callbacks)
-#     else:
-#         model.fit(X_batch, Y_batch, batch_size=32, nb_epoch=1)
 
 
 if __name__ == '__main__':

@@ -72,11 +72,15 @@ for nb_file in range(len(originFile_list)):
   originVol, originVol_num, originVolwidth, originVolheight = dp.loadFile(originFile_list[nb_file])
   maskAortaVol, maskAortaVol_num, maskAortaVolwidth, maskAortaVolheight = dp.loadFile(maskAortaFile_list[nb_file])
   maskPulVol, maskPulVol_num, maskPulVolwidth, maskPulVolheight = dp.loadFile(maskPulFile_list[nb_file])
+
   maskVol = maskAortaVol
 
   # Turn the mask images to binary images:
+  # Make the Aorta class
   for j in range(len(maskAortaVol)):
     maskAortaVol[j] = np.where(maskAortaVol[j] != 0, 1, 0)
+
+  # Make the Pulmonary class
   for j in range(len(maskPulVol)):
     maskPulVol[j] = np.where(maskPulVol[j] != 0, 2, 0)
 
@@ -84,6 +88,12 @@ for nb_file in range(len(originFile_list)):
 
   for j in range(len(maskVol)):
     maskVol[j] = np.where(maskVol[j] > 2, 0, maskVol[j])
+
+  # Make the Vessel class
+  for j in range(len(maskVol)):
+    maskVol[j] = np.where(maskVol[j] != 0, 1, 0)
+
+
   for j in range(originVol.shape[0]):
     img = originVol[j, :, :]
     out_images.append(img)
@@ -91,10 +101,15 @@ for nb_file in range(len(originFile_list)):
     img = maskVol[j, :, :]
     out_masks.append(img)
 
+  max = np.amax(maskVol)
+  min = np.amin(maskVol)
+
   vol_cur_slices = originVol.shape[0]
-  outmasks_onehot = to_categorical(out_masks, num_classes=3)
+
+  nb_class = 2
+  outmasks_onehot = to_categorical(out_masks, num_classes=nb_class)
   final_images = np.ndarray([vol_cur_slices, 512, 512, 1], dtype=np.int16)
-  final_masks = np.ndarray([vol_cur_slices, 512, 512, 3], dtype=np.int8)
+  final_masks = np.ndarray([vol_cur_slices, 512, 512, nb_class], dtype=np.int8)
 
   for j in range(len(out_images)):
     final_images[j, :, :, 0] = out_images[j]
@@ -118,7 +133,7 @@ for nb_file in range(len(originFile_list)):
   num1 = 0
 
   final_images_crop_save = np.ndarray([num1, row, col, 1], dtype=np.int16)
-  final_masks_crop_save = np.ndarray([num1, row, col, 3], dtype=np.int8)
+  final_masks_crop_save = np.ndarray([num1, row, col, nb_class], dtype=np.int8)
 
   print('Images to Patches')
   print('-' * 30)
@@ -145,7 +160,7 @@ for nb_file in range(len(originFile_list)):
 
   tubes = int(final_images_crop_save.shape[0]/slices)
   final_images_crop_save_last = np.ndarray([tubes, slices, row, col, 1], dtype=np.int16)
-  final_masks_crop_save_last = np.ndarray([tubes, slices, row, col, 3], dtype=np.int8)
+  final_masks_crop_save_last = np.ndarray([tubes, slices, row, col, nb_class], dtype=np.int8)
 
   for i in range(tubes):
     final_images_crop_save_last[i, :, :, :, :] = final_images_crop_save[i*slices:(i+1)*slices, :, :, :]
@@ -160,7 +175,7 @@ for nb_file in range(len(originFile_list)):
 
   for i in range(num_out):
     out1 = np.ndarray([cm.nb_batch_size, slices, row, col, 1], dtype=np.int16)
-    out2 = np.ndarray([cm.nb_batch_size, slices, row, col, 3], dtype=np.int8)
+    out2 = np.ndarray([cm.nb_batch_size, slices, row, col, nb_class], dtype=np.int8)
     for j in range(int(cm.nb_batch_size)):
       out1[j] = final_images_crop_save_last[i*cm.nb_batch_size+j]
       out2[j] = final_masks_crop_save_last[i*cm.nb_batch_size+j]

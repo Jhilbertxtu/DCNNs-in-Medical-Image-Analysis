@@ -138,8 +138,12 @@ for i in range(len(originFile_list)):
   # maskVol = np.squeeze(maskVol, axis=-1)
 
   # Turn the mask images to binary images:
+
+  # Make the Aorta class
   for j in range(len(maskAortaVol)):
     maskAortaVol[j] = np.where(maskAortaVol[j] != 0, 1, 0)
+
+  # Make the Pulmonary class
   for j in range(len(maskPulVol)):
     maskPulVol[j] = np.where(maskPulVol[j] != 0, 2, 0)
 
@@ -147,6 +151,10 @@ for i in range(len(originFile_list)):
 
   for j in range(len(maskVol)):
     maskVol[j] = np.where(maskVol[j] > 2, 0, maskVol[j])
+
+  # # Make the Vessel class
+  # for j in range(len(maskVol)):
+  #   maskVol[j] = np.where(maskVol[j] != 0, 1, 0)
 
   for i in range(originVol.shape[0]):
     img = originVol[i, :, :]
@@ -160,9 +168,10 @@ for i in range(len(originFile_list)):
 
   vol_slices.append(originVol.shape[0])
 
-outmasks_onehot = to_categorical(out_masks, num_classes=3)
+nb_class = 3
+outmasks_onehot = to_categorical(out_masks, num_classes=nb_class)
 final_images = np.ndarray([sum(vol_slices), 512, 512], dtype=np.int16)
-final_masks = np.ndarray([sum(vol_slices), 512, 512, 3], dtype=np.int8)
+final_masks = np.ndarray([sum(vol_slices), 512, 512, nb_class], dtype=np.int8)
 
 for i in range(len(out_images)):
   final_images[i] = out_images[i]
@@ -192,14 +201,14 @@ final_masks_crop = final_masks[:, row_1:row_2, col_1:col_2, :]
 num1 = 0
 
 final_images_crop_save = np.ndarray([num1, row, col, 1], dtype=np.int16)
-final_masks_crop_save = np.ndarray([num1, row, col, 3], dtype=np.int8)
+final_masks_crop_save = np.ndarray([num1, row, col, nb_class], dtype=np.int8)
 
 print('Images to Patches')
 print('-' * 30)
 
 count = 0
 for num_vol in range(0, len(vol_slices)):
-  num_patches = int((vol_slices[num_vol] - slices) / gaps)
+  num_patches = int(((vol_slices - slices) / gaps) + 1)
   if num_vol>0:
     count = count + vol_slices[num_vol-1]
   else:
@@ -220,7 +229,7 @@ for num_vol in range(0, len(vol_slices)):
 
 tubes = int(final_images_crop_save.shape[0]/slices)
 final_images_crop_save_last = np.ndarray([tubes, slices, row, col, 1], dtype=np.int16)
-final_masks_crop_save_last = np.ndarray([tubes, slices, row, col, 3], dtype=np.int8)
+final_masks_crop_save_last = np.ndarray([tubes, slices, row, col, nb_class], dtype=np.int8)
 
 
 for i in range(tubes):
@@ -234,8 +243,8 @@ random_scale = int(len(final_images_crop_save_last))
 print('Saving Images...')
 print('-' * 30)
 
-np.save(cm.workingPath.training3DSet_path + 'trainImages3Dtest.npy', final_images_crop_save_last)
-np.save(cm.workingPath.training3DSet_path + 'trainMasks3Dtest.npy', final_masks_crop_save_last)
+np.save(cm.workingPath.training3DSet_path + 'trainImages3D2.npy', final_images_crop_save_last)
+np.save(cm.workingPath.training3DSet_path + 'trainMasks3D2.npy', final_masks_crop_save_last)
 
 print('Training Images Saved')
 print('-' * 30)
