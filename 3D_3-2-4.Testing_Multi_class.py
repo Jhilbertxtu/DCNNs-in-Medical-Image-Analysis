@@ -218,6 +218,7 @@ def model_test(use_existing):
     false_positive_rate_aorta, true_positive_rate_aorta, thresholds_aorta = roc_curve(actual, predictions, pos_label=1)
     roc_auc_aorta = auc(false_positive_rate_aorta, true_positive_rate_aorta)
     plt.figure(1, figsize=(6, 6))
+    plt.figure(1)
     plt.title('ROC of Aorta')
     plt.plot(false_positive_rate_aorta, true_positive_rate_aorta, 'b')
     label = 'AUC = %0.2f' % roc_auc_aorta
@@ -230,7 +231,7 @@ def model_test(use_existing):
     # plt.show()
     saveName = '/Plots/ROC_Aorta_curve.png'
     plt.savefig(current_dir + saveName)
-
+    plt.close()
     ########## ROC curve pul
 
     actual = imgs_true[:, :, :, 2].reshape(-1)
@@ -239,6 +240,7 @@ def model_test(use_existing):
     false_positive_rate_pul, true_positive_rate_pul, thresholds_pul = roc_curve(actual, predictions, pos_label=1)
     roc_auc_pul = auc(false_positive_rate_pul, true_positive_rate_pul)
     plt.figure(2, figsize=(6, 6))
+    plt.figure(2)
     plt.title('ROC of pul')
     plt.plot(false_positive_rate_pul, true_positive_rate_pul, 'b')
     label = 'AUC = %0.2f' % roc_auc_pul
@@ -251,6 +253,8 @@ def model_test(use_existing):
     # plt.show()
     saveName = '/Plots/ROC_Pul_curve.png'
     plt.savefig(current_dir + saveName)
+    plt.close()
+
 
     false_positive_rate_aorta = None
     true_positive_rate_aorta = None
@@ -301,6 +305,7 @@ def model_test(use_existing):
     plt_col = int(len(imgs_origin) / steps)
 
     plt.figure(3, figsize=(25, 12))
+    plt.figure(3)
 
     for i in slice:
       if i == 0:
@@ -309,8 +314,6 @@ def model_test(use_existing):
         plt_num = int(i / steps)
 
       if plt_num <= plt_col:
-
-        plt.figure(3)
 
         ax1 = plt.subplot(plt_row, plt_col, plt_num)
         title = 'slice=' + str(i)
@@ -343,6 +346,7 @@ def model_test(use_existing):
 
     plt.subplots_adjust(left=0.0, bottom=0.05, right=1.0, top=0.95, hspace=0.3, wspace=0.3)
     plt.savefig(current_dir + saveName)
+    plt.close()
     # plt.show()
 
     ################################ Pulmonary
@@ -352,7 +356,7 @@ def model_test(use_existing):
     plt_col = int(len(imgs_origin) / steps)
 
     plt.figure(4, figsize=(25, 12))
-
+    plt.figure(4)
     for i in slice:
       if i == 0:
         plt_num = int(i / steps) + 1
@@ -360,8 +364,6 @@ def model_test(use_existing):
         plt_num = int(i / steps)
 
       if plt_num <= plt_col:
-
-        plt.figure(4)
 
         ax1 = plt.subplot(plt_row, plt_col, plt_num)
         title = 'slice=' + str(i)
@@ -394,6 +396,7 @@ def model_test(use_existing):
 
     plt.subplots_adjust(left=0.0, bottom=0.05, right=1.0, top=0.95, hspace=0.3, wspace=0.3)
     plt.savefig(current_dir + saveName)
+    plt.close()
     # plt.show()
 
     print('Images saved')
