@@ -11,15 +11,9 @@
 from CommonUtil.Constants import *
 from CommonUtil.ErrorMessages import *
 from keras import backend as K
-from glob import glob
 import numpy as np
 
-np.random.seed(0)
-import sys
-import os
-
 SHUFFLEIMAGES = False
-
 NORMALIZEDATA = False
 
 
@@ -45,17 +39,8 @@ class FileDataManager(object):
   @classmethod
   def loadDataFiles2D(cls, imagesFile, masksFile, maxSlicesToLoad=1000000):
 
-    if (not os.path.exists(imagesFile) or
-      not os.path.exists(masksFile)):
-      message = "Images file or Masks file does not exist (\'%s\',\'%s\')" % (imagesFile, masksFile)
-      CatchErrorException(message)
-
     xData = np.load(imagesFile)
     yData = np.load(masksFile)
-
-    if (xData.shape != yData.shape):
-      message = "Images array of different size to Masks array (\'%s\',\'%s\')" % (xData.shape, yData.shape)
-      CatchErrorException(message)
 
     totalSlices = min(xData.shape[0], maxSlicesToLoad)
 
@@ -78,26 +63,12 @@ class FileDataManager(object):
   @classmethod
   def loadDataListFiles2D(cls, listImagesFiles, listMasksFiles, maxSlicesToLoad=1000000):
 
-    if (not listImagesFiles or
-      not listMasksFiles):
-      message = "No Images files found"
-      CatchErrorException(message)
-
     # First, loop over files to run cheks and compute size output array
     totalSlices = 0
     for i, (imagesFile, masksFile) in enumerate(zip(listImagesFiles, listMasksFiles)):
 
-      if (not os.path.exists(imagesFile) or
-        not os.path.exists(masksFile)):
-        message = "Images file or Masks file does not exist (\'%s\',\'%s\')" % (imagesFile, masksFile)
-        CatchErrorException(message)
-
       xData = np.load(imagesFile)
       yData = np.load(masksFile)
-
-      if (xData.shape != yData.shape):
-        message = "Images array of different size to Masks array (\'%s\',\'%s\')" % (xData.shape, yData.shape)
-        CatchErrorException(message)
 
       totalSlices += xData.shape[0]
 
@@ -153,12 +124,7 @@ class FileDataManager(object):
       return (xData, yData)
 
   @classmethod
-  def loadDataFiles3D(cls, imagesFile, masksFile, maxVolsToLoad=1000):
-
-    if (not os.path.exists(imagesFile) or
-      not os.path.exists(masksFile)):
-      message = "Images file or Masks file does not exist (\'%s\',\'%s\')" % (imagesFile, masksFile)
-      CatchErrorException(message)
+  def loadDataFiles3D(cls, imagesFile, masksFile, maxVolsToLoad=1000, shuffleImages=SHUFFLEIMAGES):
 
     xData = np.load(imagesFile)
     yData = np.load(masksFile)
@@ -170,10 +136,10 @@ class FileDataManager(object):
     totalVols = min(xData.shape[0], maxVolsToLoad)
 
     if K.image_data_format() == 'channels_first':
-      xData = np.asarray(xData[0:totalVols], dtype=FORMATIMAGEDATA).reshape(
-        [totalVols, 1, IMAGES_DEPTHZ, IMAGES_HEIGHT, IMAGES_WIDTH])
-      yData = np.asarray(yData[0:totalVols], dtype=FORMATMASKDATA).reshape(
-        [totalVols, 3, IMAGES_DEPTHZ, IMAGES_HEIGHT, IMAGES_WIDTH])
+     xData = np.asarray(xData[0:totalVols], dtype=FORMATIMAGEDATA).reshape(
+       [totalVols, 1, IMAGES_DEPTHZ, IMAGES_HEIGHT, IMAGES_WIDTH])
+     yData = np.asarray(yData[0:totalVols], dtype=FORMATMASKDATA).reshape(
+       [totalVols, 3, IMAGES_DEPTHZ, IMAGES_HEIGHT, IMAGES_WIDTH])
     else:
       xData = np.asarray(xData[0:totalVols], dtype=FORMATIMAGEDATA).reshape(
         [totalVols, IMAGES_DEPTHZ, IMAGES_HEIGHT, IMAGES_WIDTH, 1])
@@ -185,22 +151,13 @@ class FileDataManager(object):
     else:
       return (xData, yData)
 
+
   @classmethod
   def loadDataListFiles3D(cls, listImagesFiles, listMasksFiles, maxVolsToLoad=1000):
-
-    if (not listImagesFiles or
-      not listMasksFiles):
-      message = "No Images files found"
-      CatchErrorException(message)
 
     # First, loop over files to run cheks and compute size output array
     totalVols = 0
     for i, (imagesFile, masksFile) in enumerate(zip(listImagesFiles, listMasksFiles)):
-
-      if (not os.path.exists(imagesFile) or
-        not os.path.exists(masksFile)):
-        message = "Images file or Masks file does not exist (\'%s\',\'%s\')" % (imagesFile, masksFile)
-        CatchErrorException(message)
 
       xData = np.load(imagesFile)
       # yData = np.load(masksFile)

@@ -20,7 +20,10 @@
 from __future__ import print_function
 
 import Modules.Common_modules as cm
-import Modules.Network as nw
+import Modules.Visualization as vs
+import Modules.LossFunction as lf
+import Networks.UNet_3D as UNet_3D
+from keras.optimizers import SGD, Adam
 import datetime
 import numpy as np
 import keras.losses
@@ -75,7 +78,7 @@ def model_test(use_existing):
   filename = cm.filename
   modelname = cm.modellist[0]
   originFile_list = sorted(glob(cm.workingPath.originTestingSet_path + filename))
-  maskFile_list = sorted(glob(cm.workingPath.maskTestingSet_path + filename))
+  maskFile_list = sorted(glob(cm.workingPath.aortaTestingSet_path + filename))
 
   out_test_images = []
   out_test_masks = []
@@ -107,16 +110,22 @@ def model_test(use_existing):
 
 
 
-  row = nw.img_rows_3d
-  col = nw.img_cols_3d
+  row = cm.img_rows_3d
+  col = cm.img_cols_3d
   num_rowes = 1
   num_coles = 1
   row_1 = int((512 - row) / 2)
   row_2 = int(512 - (512 - row) / 2)
   col_1 = int((512 - col) / 2)
   col_2 = int(512 - (512 - col) / 2)
-  slices = nw.slices_3d
-  gaps = nw.gaps_3d
+  slices = cm.slices_3d
+  gaps = cm.gaps_3d
+
+  learning_rate = 0.00001
+
+  adam = Adam(lr=learning_rate)
+
+  opti = adam
 
   final_images_crop = final_test_images[:, row_1:row_2, col_1:col_2, :]
   final_masks_crop = final_test_masks[:, row_1:row_2, col_1:col_2, :]
@@ -132,7 +141,7 @@ def model_test(use_existing):
   predicted_mask_volume = np.ndarray([num_test_images, row, col], dtype=np.float32)
 
   # model = nw.get_3D_unet()
-  model = nw.get_small_3D_unet()
+  model = UNet_3D.get_3d_unet()
   # model = nw.get_3D_unet_drop_1()
   # model = nw.get_3D_unet_BN()
 
@@ -153,6 +162,11 @@ def model_test(use_existing):
 
     predicted_mask = model.predict(test_image)
 
+    if i == 88:
+      vs.visualize_activation_in_layer(model, test_image)
+    else:
+      pass
+
     predicted_mask_volume[count1:count2] += predicted_mask[0, :, :, :, 0]
 
   predicted_mask_volume = np.expand_dims(predicted_mask_volume, axis=-1)
@@ -170,13 +184,13 @@ def model_test(use_existing):
   imgs_predict = np.squeeze(imgs_predict, axis=-1)
   imgs_predict_threshold = np.squeeze(imgs_predict_threshold, axis=-1)
 
-  imgs_predict_threshold = np.where(imgs_predict_threshold < (8), 0, 1)
+  imgs_predict_threshold = np.where(imgs_predict_threshold < (10), 0, 1)
 
 
   if using_start_end == 1:
-    mean = nw.dice_coef_np(imgs_predict_threshold[start_slice:end_slice], imgs_true[start_slice:end_slice])
+    mean = lf.dice_coef_np(imgs_predict_threshold[start_slice:end_slice], imgs_true[start_slice:end_slice])
   else:
-    mean = nw.dice_coef_np(imgs_predict_threshold, imgs_true)
+    mean = lf.dice_coef_np(imgs_predict_threshold, imgs_true)
 
   np.savetxt(cm.workingPath.testingSet_path + 'dicemean.txt', np.array(mean).reshape(1, ), fmt='%.5f')
 
@@ -203,57 +217,57 @@ def model_test(use_existing):
   # #############################################
   # # Automatically:
   #
-  # steps = 40
-  # slice = range(0, len(imgs_origin), steps)
-  # plt_row = 3
-  # plt_col = int(len(imgs_origin) / steps)
-  #
-  # plt.figure(1, figsize=(25, 12))
-  #
-  # for i in slice:
-  #   if i == 0:
-  #     plt_num = int(i / steps) + 1
-  #   else:
-  #     plt_num = int(i / steps)
-  #
-  #   if plt_num <= plt_col:
-  #
-  #     plt.figure(1)
-  #
-  #     ax1 = plt.subplot(plt_row, plt_col, plt_num)
-  #     title = 'slice=' + str(i)
-  #     plt.title(title)
-  #     ax1.imshow(imgs_origin[i, :, :], cmap=color1, alpha=transparent1)
-  #     ax1.imshow(imgs_true[i, :, :], cmap=color2, alpha=transparent2)
-  #
-  #     ax2 = plt.subplot(plt_row, plt_col, plt_num + plt_col)
-  #     title = 'slice=' + str(i)
-  #     plt.title(title)
-  #     ax2.imshow(imgs_origin[i, :, :], cmap=color1, alpha=transparent1)
-  #     ax2.imshow(imgs_predict[i, :, :], cmap=color2, alpha=transparent2)
-  #
-  #     ax3 = plt.subplot(plt_row, plt_col, plt_num + 2 * plt_col)
-  #     title = 'slice=' + str(i)
-  #     plt.title(title)
-  #     ax3.imshow(imgs_origin[i, :, :], cmap=color1, alpha=transparent1)
-  #     ax3.imshow(imgs_predict_threshold[i, :, :], cmap=color2, alpha=transparent2)
-  #   else:
-  #     pass
-  #
-  # modelname = cm.modellist[0]
-  #
-  # imageName = re.findall(r'\d+\.?\d*', modelname)
-  # epoch_num = int(imageName[0]) + 1
-  # accuracy = float(np.loadtxt(cm.workingPath.testingSet_path + 'dicemean.txt', float))
-  #
-  # # saveName = 'epoch_' + str(epoch_num) + '_dice_' +str(accuracy) + '.png'
-  # saveName = 'epoch_%02d_dice_%.3f.png' % (epoch_num-1, accuracy)
-  #
-  # plt.subplots_adjust(left=0.0, bottom=0.05, right=1.0, top=0.95, hspace=0.3, wspace=0.3)
-  # plt.savefig(cm.workingPath.testingSet_path + saveName)
-  # # plt.show()
-  #
-  # print('Images saved')
+  steps = 40
+  slice = range(0, len(imgs_origin), steps)
+  plt_row = 3
+  plt_col = int(len(imgs_origin) / steps)
+
+  plt.figure(1, figsize=(25, 12))
+
+  for i in slice:
+    if i == 0:
+      plt_num = int(i / steps) + 1
+    else:
+      plt_num = int(i / steps)
+
+    if plt_num <= plt_col:
+
+      plt.figure(1)
+
+      ax1 = plt.subplot(plt_row, plt_col, plt_num)
+      title = 'slice=' + str(i)
+      plt.title(title)
+      ax1.imshow(imgs_origin[i, :, :], cmap=color1, alpha=transparent1)
+      ax1.imshow(imgs_true[i, :, :], cmap=color2, alpha=transparent2)
+
+      ax2 = plt.subplot(plt_row, plt_col, plt_num + plt_col)
+      title = 'slice=' + str(i)
+      plt.title(title)
+      ax2.imshow(imgs_origin[i, :, :], cmap=color1, alpha=transparent1)
+      ax2.imshow(imgs_predict[i, :, :], cmap=color2, alpha=transparent2)
+
+      ax3 = plt.subplot(plt_row, plt_col, plt_num + 2 * plt_col)
+      title = 'slice=' + str(i)
+      plt.title(title)
+      ax3.imshow(imgs_origin[i, :, :], cmap=color1, alpha=transparent1)
+      ax3.imshow(imgs_predict_threshold[i, :, :], cmap=color2, alpha=transparent2)
+    else:
+      pass
+
+  modelname = cm.modellist[0]
+
+  imageName = re.findall(r'\d+\.?\d*', modelname)
+  epoch_num = int(imageName[0]) + 1
+  accuracy = float(np.loadtxt(cm.workingPath.testingSet_path + 'dicemean.txt', float))
+
+  # saveName = 'epoch_' + str(epoch_num) + '_dice_' +str(accuracy) + '.png'
+  saveName = 'epoch_%02d_dice_%.3f.png' % (epoch_num-1, accuracy)
+
+  plt.subplots_adjust(left=0.0, bottom=0.05, right=1.0, top=0.95, hspace=0.3, wspace=0.3)
+  plt.savefig(cm.workingPath.testingSet_path + saveName)
+  # plt.show()
+
+  print('Images saved')
 
   # Save npy as dcm files:
 

@@ -11,7 +11,7 @@ slices_3d = 16
 gaps_3d = 2
 
 val_split = 0.9
-nb_batch_size = 2
+nb_batch_size = 1
 
 class workingPath(list):
   # setup working paths:  (for Windows: \\)
@@ -42,8 +42,12 @@ class workingPath(list):
 
   # setup testing paths:
   testingSet_path = os.path.join(working_path, 'testingSet/')
+  testingResults_path = os.path.join(testingSet_path, 'Results/')
   originTestingSet_path = os.path.join(testingSet_path, 'originSet/')
+  originAbnormalTestingSet_path = os.path.join(originTestingSet_path, 'abnormal/')
+  originLidiaTestingSet_path = os.path.join(originTestingSet_path, 'Lidia_Data/')
   maskTestingSet_path = os.path.join(testingSet_path, 'maskSet/')
+  maskLidiaTestingSet_path = os.path.join(maskTestingSet_path, 'Lidia_Lung_Segmentation/')
   aortaTestingSet_path = os.path.join(maskTestingSet_path, 'Aorta/')
   pulTestingSet_path = os.path.join(maskTestingSet_path, 'Pul/')
 
@@ -51,9 +55,9 @@ filename = 'vol3885_*.dcm'
 start_slice = 110
 # filename = 'Predicted_vol3885_*.dcm'
 
-modellist = glob(workingPath.model_path + 'weights.epoch_92*.hdf5')
-
-# modellist = glob(workingPath.model_path + 'Best_weights.174*.hdf5')
+# modellist = glob(workingPath.model_path + 'weights.epoch_174*.hdf5')
+#
+modellist = glob(workingPath.model_path + 'Best_weights.174*.hdf5')
 
 # modellist = glob(workingPath.model_path + 'Val.0*.hdf5')
 
@@ -70,7 +74,7 @@ else:
 
 
 def mkdir(path):
-  import os
+  #import os
 
   path = path.strip()
   path = path.rstrip("\\")
