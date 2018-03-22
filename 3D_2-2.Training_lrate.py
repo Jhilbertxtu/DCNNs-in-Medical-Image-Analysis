@@ -31,7 +31,11 @@ from keras.optimizers import SGD, Adam
 from keras.utils import plot_model
 import sys
 from Prototypes.ManyFilesBatchGenerator import *
+import random
 
+# cm.set_limit_gpu_memory_usage()
+
+random.seed(0)
 
 img_rows = cm.img_rows_3d
 img_cols = cm.img_cols_3d
@@ -88,10 +92,17 @@ def train_and_predict(use_existing):
 
   imgs_train = np.load(cm.workingPath.home_path + 'trainImages3D16.npy')
   imgs_mask_train = np.load(cm.workingPath.home_path + 'trainMasks3D16.npy')
+
+  # imgs_train = np.load(cm.workingPath.home_path + 'vesselImages.npy')
+  # imgs_mask_train = np.load(cm.workingPath.home_path + 'vesselMasks.npy')
+
   # imgs_train = np.load(cm.workingPath.trainingPatchesSet_path + 'img_0000.npy')
   # imgs_mask_train = np.load(cm.workingPath.trainingPatchesSet_path + 'mask_0000.npy')
-  x_val = np.load(cm.workingPath.validationSet_path + 'valImages.npy')
-  y_val = np.load(cm.workingPath.validationSet_path + 'valMasks.npy')
+  # x_val = np.load(cm.workingPath.home_path + 'vesselValImages.npy')
+  # y_val = np.load(cm.workingPath.home_path + 'vesselValMasks.npy')
+
+  # x_val = np.load(cm.workingPath.validationSet_path + 'valImages.npy')
+  # y_val = np.load(cm.workingPath.validationSet_path + 'valMasks.npy')
 
 
   print('_' * 30)
@@ -136,7 +147,7 @@ def train_and_predict(use_existing):
   print(imgs_mask_train.shape)
 
   model.fit(imgs_train, imgs_mask_train, batch_size=1, epochs=4000, verbose=1, shuffle=True,
-            validation_data=(x_val, y_val), callbacks=callbacks_list)
+            validation_split=0.1, callbacks=callbacks_list)
 
   print('training finished')
 

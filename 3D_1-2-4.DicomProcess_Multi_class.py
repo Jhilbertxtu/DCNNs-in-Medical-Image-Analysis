@@ -94,9 +94,9 @@ def limitedEqualize(img_array, limit=2.0):
 # Get the file list:
 # originFile_list = sorted(glob(cm.workingPath.originTrainingSet_path + 'vol*.npy'))
 # maskFile_list = sorted(glob(cm.workingPath.maskTrainingSet_path + 'vol*.npy'))
-originFile_list = sorted(glob(cm.workingPath.originTrainingSet_path + 'vol*.dcm'))
-maskAortaFile_list = sorted(glob(cm.workingPath.aortaTrainingSet_path + 'vol*.dcm'))
-maskPulFile_list = sorted(glob(cm.workingPath.pulTrainingSet_path + 'vol*.dcm'))
+originFile_list = sorted(glob(cm.workingPath.originTrainingSet_path + 'vol*.dcm'))[:]
+maskAortaFile_list = sorted(glob(cm.workingPath.aortaTrainingSet_path + 'vol*.dcm'))[:]
+maskPulFile_list = sorted(glob(cm.workingPath.pulTrainingSet_path + 'vol*.dcm'))[:]
 
 filename = str(originFile_list[0])[24:-4]
 
@@ -133,6 +133,7 @@ for i in range(len(originFile_list)):
   originVol, originVol_num, originVolwidth, originVolheight = loadFile(originFile_list[i])
   maskAortaVol, maskAortaVol_num, maskAortaVolwidth, maskAortaVolheight = loadFile(maskAortaFile_list[i])
   maskPulVol, maskPulVol_num, maskPulVolwidth, maskPulVolheight = loadFile(maskPulFile_list[i])
+
   maskVol = maskAortaVol
   # originVol = np.squeeze(originVol, axis=-1)
   # maskVol = np.squeeze(maskVol, axis=-1)
@@ -152,9 +153,9 @@ for i in range(len(originFile_list)):
   for j in range(len(maskVol)):
     maskVol[j] = np.where(maskVol[j] > 2, 0, maskVol[j])
 
-  # # Make the Vessel class
-  # for j in range(len(maskVol)):
-  #   maskVol[j] = np.where(maskVol[j] != 0, 1, 0)
+  # Make the Vessel class
+  for j in range(len(maskVol)):
+    maskVol[j] = np.where(maskVol[j] != 0, 1, 0)
 
   for i in range(originVol.shape[0]):
     img = originVol[i, :, :]
@@ -168,14 +169,14 @@ for i in range(len(originFile_list)):
 
   vol_slices.append(originVol.shape[0])
 
-nb_class = 3
-outmasks_onehot = to_categorical(out_masks, num_classes=nb_class)
+nb_class = 2
+# outmasks_onehot = to_categorical(out_masks, num_classes=nb_class)
 final_images = np.ndarray([sum(vol_slices), 512, 512], dtype=np.int16)
 final_masks = np.ndarray([sum(vol_slices), 512, 512, nb_class], dtype=np.int8)
 
 for i in range(len(out_images)):
   final_images[i] = out_images[i]
-  final_masks[i] = outmasks_onehot[i]
+  final_masks[i] = out_masks[i]
 
 
 final_images = np.expand_dims(final_images, axis=-1)
@@ -208,7 +209,7 @@ print('-' * 30)
 
 count = 0
 for num_vol in range(0, len(vol_slices)):
-  num_patches = int(((vol_slices - slices) / gaps) + 1)
+  num_patches = int(((vol_slices[num_vol] - slices) / gaps) + 1)
   if num_vol>0:
     count = count + vol_slices[num_vol-1]
   else:
@@ -243,8 +244,8 @@ random_scale = int(len(final_images_crop_save_last))
 print('Saving Images...')
 print('-' * 30)
 
-np.save(cm.workingPath.training3DSet_path + 'trainImages3D2.npy', final_images_crop_save_last)
-np.save(cm.workingPath.training3DSet_path + 'trainMasks3D2.npy', final_masks_crop_save_last)
+np.save(cm.workingPath.training3DSet_path + 'trainImages3D.npy', final_images_crop_save_last)
+np.save(cm.workingPath.training3DSet_path + 'trainMasks3D.npy', final_masks_crop_save_last)
 
 print('Training Images Saved')
 print('-' * 30)

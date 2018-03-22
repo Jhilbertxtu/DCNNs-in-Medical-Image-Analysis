@@ -4,13 +4,37 @@ from keras.models import Model, save_model, load_model, Sequential
 from keras.layers import Input, merge, Convolution2D, MaxPooling2D, UpSampling2D, AtrousConv2D, Dropout, Deconvolution2D
 from keras.layers import Input, merge, Conv3D, MaxPooling3D, UpSampling3D, BatchNormalization, Activation, InputLayer
 from keras.optimizers import Adam, Adadelta
+import tensorflow as tf
 import Modules.LossFunction as lf
 import Modules.Common_modules as cm
 import numpy as np
 
 #######################################################
 # Getting 3D U-net:
+def spatial_dropout(x, keep_prob, seed=1234):
+    # x is a convnet activation with shape BxWxHxF where F is the
+    # number of feature maps for that layer
+    # keep_prob is the proportion of feature maps we want to keep
 
+    # get the batch size and number of feature maps
+    num_feature_maps = [tf.shape(x)[0], tf.shape(x)[3]]
+
+    # get some uniform noise between keep_prob and 1 + keep_prob
+    random_tensor = keep_prob
+    random_tensor += tf.random_uniform(num_feature_maps,
+                                       seed=seed,
+                                       dtype=x.dtype)
+
+    # if we take the floor of this, we get a binary matrix where
+    # (1-keep_prob)% of the values are 0 and the rest are 1
+    binary_tensor = tf.floor(random_tensor)
+
+    # Reshape to multiply our feature maps by this tensor correctly
+    binary_tensor = tf.reshape(binary_tensor,
+                               [-1, 1, 1, tf.shape(x)[3]])
+    # Zero out feature maps where appropriate; scale up to compensate
+    ret = tf.div(x, keep_prob) * binary_tensor
+    return ret
 
 def get_3d_unet_bn():
 
@@ -130,18 +154,18 @@ def get_3d_unet():
   conv8 = Conv3D(filters=64, kernel_size=(3, 3, 3), strides=(1, 1, 1), activation='relu', border_mode='same')(conv8)
 
   up9 = merge([UpSampling3D(size=(2, 2, 2))(conv8), conv1], mode='concat', concat_axis=-1)
-  conv9 = Conv3D(filters=32, kernel_size=(3, 3, 3), strides=(1, 1, 1), activation='relu', border_mode='same')(up9)
-  conv9 = Conv3D(filters=32, kernel_size=(3, 3, 3), strides=(1, 1, 1), activation='relu', border_mode='same')(conv9)
+  conv9 = Conv3D(filters=64, kernel_size=(3, 3, 3), strides=(1, 1, 1), activation='relu', border_mode='same')(up9)
+  conv9 = Conv3D(filters=64, kernel_size=(3, 3, 3), strides=(1, 1, 1), activation='relu', border_mode='same')(conv9)
 
   conv10 = Conv3D(filters=3, kernel_size=(1, 1, 1), strides=(1, 1, 1), activation='sigmoid')(conv9)
 
   model = Model(input=inputs, output=conv10)
 
-  weights = np.array([1, 100, 100])
-  loss = lf.weighted_categorical_crossentropy_loss(weights)
+  # weights = np.array([1.0, 1.0, 1.0])
+  # loss = lf.weighted_categorical_crossentropy_loss(weights)
   # model.compile(optimizer=Adam(lr=1.0e-5), loss="categorical_crossentropy", metrics=["categorical_accuracy"])
-  model.compile(optimizer=Adam(lr=1.0e-5), loss=loss, metrics=["categorical_accuracy"])
-  # model.compile(optimizer=opti, loss="categorical_crossentropy", metrics=["categorical_accuracy"])
+  # model.compile(optimizer=Adam(lr=1.0e-5), loss=loss, metrics=["categorical_accuracy"])
+  model.compile(optimizer=Adam(lr=1.0e-5), loss="categorical_crossentropy", metrics=["categorical_accuracy"])
   # model.compile(optimizer=Adam(lr=1.0e-5), loss=lf.binary_crossentropy_loss, metrics=[lf.binary_crossentropy])
 
   return model

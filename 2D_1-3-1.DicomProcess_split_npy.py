@@ -46,7 +46,18 @@ maskPulFile_list = sorted(glob(cm.workingPath.pulTrainingSet_path + 'vol*.dcm'))
 axis_process = "Axial"  ## axis you want to process
 # axis_process = "Sagittal"
 # axis_process = "Coronal"
-
+row = cm.img_rows_3d
+col = cm.img_cols_3d
+num_rowes = 1
+num_coles = 1
+row_1 = int((512 - row) / 2)
+row_2 = int(512 - (512 - row) / 2)
+col_1 = int((512 - col) / 2)
+col_2 = int(512 - (512 - col) / 2)
+slices = cm.slices_3d
+gaps = cm.gaps_3d
+thi_1 = int((512 - slices) / 2)
+thi_2 = int(512 - (512 - slices) / 2)
 # Training set:
 print('-' * 30)
 print('Loading files...')
@@ -59,9 +70,9 @@ if axis_process == "Axial":
     maskAortaVol, maskAortaVol_num, maskAortaVolwidth, maskAortaVolheight = dp.loadFile(maskAortaFile_list[i])
     maskPulVol, maskPulVol_num, maskPulVolwidth, maskPulVolheight = dp.loadFile(maskPulFile_list[i])
 
-    np.save(cm.workingPath.training3DSet_path + 'trainImages_%04d.npy' %i, originVol)
-    np.save(cm.workingPath.training3DSet_path + 'trainAortaMasks_%04d.npy' %i, maskAortaVol)
-    np.save(cm.workingPath.training3DSet_path + 'trainPulMasks_%04d.npy' %i, maskPulVol)
+    np.save(cm.workingPath.training3DSet_path + 'trainImages_%04d.npy' %i, originVol[:, row_1:row_2, col_1:col_2])
+    np.save(cm.workingPath.training3DSet_path + 'trainAortaMasks_%04d.npy' %i, maskAortaVol[:, row_1:row_2, col_1:col_2])
+    np.save(cm.workingPath.training3DSet_path + 'trainPulMasks_%04d.npy' %i, maskPulVol[:, row_1:row_2, col_1:col_2])
 
 else:
   pass

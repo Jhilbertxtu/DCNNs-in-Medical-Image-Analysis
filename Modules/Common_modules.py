@@ -57,7 +57,7 @@ start_slice = 110
 
 # modellist = glob(workingPath.model_path + 'weights.epoch_174*.hdf5')
 #
-modellist = glob(workingPath.model_path + 'Best_weights.174*.hdf5')
+modellist = glob(workingPath.model_path + 'Best_weights.01*.hdf5')
 
 # modellist = glob(workingPath.model_path + 'Val.0*.hdf5')
 
@@ -86,5 +86,24 @@ def mkdir(path):
     return True
   else:
     return False
+
+
+def set_limit_gpu_memory_usage():
+
+    import keras.backend.tensorflow_backend as KTF
+    import tensorflow as tf
+    import os
+    DEFAULT_FRAC_GPU_USAGE = 0.2
+
+    def get_session(gpu_fraction=DEFAULT_FRAC_GPU_USAGE):
+        num_threads = os.environ.get('OMP_NUM_THREADS')
+        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=gpu_fraction)
+        if num_threads:
+            return tf.Session(config=tf.ConfigProto(
+                gpu_options=gpu_options, intra_op_parallelism_threads=num_threads))
+        else:
+            return tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+
+    KTF.set_session(get_session())
 
 

@@ -97,7 +97,7 @@ def visualize_activation_in_layer_one_plot(model, input_image, dir):
         plt_row = 1
         plt_col = C1.shape[-1]
 
-      plt.figure(layer_index, figsize=(3*plt_col, 12))
+      plt.figure(layer_index, figsize=(3*plt_col, 3*plt_row))
       plt.figure(layer_index)
 
       for plt_num in range (C1.shape[-1]):
@@ -109,7 +109,7 @@ def visualize_activation_in_layer_one_plot(model, input_image, dir):
 
       plt.savefig(os.path.join(dir, 'feature_maps', 'layer_%d' % layer_index,
                               '%d_feature_maps.png' % (layer_index)))
-
+      plt.close()
 
   # # filters:
   # for layer_index in range(0, len(model.weights), 2):

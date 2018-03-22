@@ -37,10 +37,14 @@ except:
 
 # Import dcm file and turn it into an image array:
 # Get the file list:
+# originFile_list = sorted(glob(cm.workingPath.training3DSet_path + 'trainImages3D*.npy'))
+# maskFile_list = sorted(glob(cm.workingPath.training3DSet_path + 'trainMasks3D*.npy'))
+#
 originFile_list = sorted(glob(cm.workingPath.validationPatchesSet_path + 'img_*.npy'))
 maskFile_list = sorted(glob(cm.workingPath.validationPatchesSet_path + 'mask_*.npy'))
 
 # Load file:
+vol_slices = []
 out_images = []
 out_masks = []
 # out_test_images = []
@@ -54,6 +58,16 @@ print('-' * 30)
 print('Loading files...')
 print('-' * 30)
 
+# if axis_process == "Axial":
+#   for i in range(len(originFile_list)):
+#
+#     originVol= np.load(originFile_list[i])
+#
+#     vol_slices.append(len(originVol))
+
+final_images = np.ndarray([0, 16, 256, 256, 1], dtype=np.int16)
+final_masks = np.ndarray([0, 16, 256, 256, 2], dtype=np.int8)
+
 if axis_process == "Axial":
   for i in range(len(originFile_list)):
 
@@ -62,30 +76,16 @@ if axis_process == "Axial":
     # maskVolInfo = loadFileInformation(maskFile_list[i])
 
     originVol= np.load(originFile_list[i])
-    maskVol= np.load(maskFile_list[i])
-
-    # Turn the mask images to binary images:
-    for i in range(originVol.shape[0]):
-      img = originVol[i, :, :, :]
-      out_images.append(img)
-    for i in range(maskVol.shape[0]):
-      img = maskVol[i, :, :, :]
-      out_masks.append(img)
-
-  num_images = len(out_images)
+    # maskVol= np.load(maskFile_list[i])
 
   # Writing out images and masks as (1 channel) arrays for input into network
-  final_images = np.ndarray([num_images, cm.slices_3d, cm.img_rows_3d, cm.img_cols_3d, 1], dtype=np.int16)
-  final_masks = np.ndarray([num_images, cm.slices_3d, cm.img_rows_3d, cm.img_cols_3d, 3], dtype=np.int8)
-  for i in range(num_images):
-    final_images[i] = out_images[i]
-    final_masks[i] = out_masks[i]
-
+    final_images = np.concatenate((final_images, originVol))
+    # final_masks = np.concatenate((final_masks, maskVol))
   print('Saving Images...')
   print('-' * 30)
 
-  np.save(cm.workingPath.validationSet_path + 'valImages.npy', final_images)
-  np.save(cm.workingPath.validationSet_path + 'valMasks.npy', final_masks)
+  np.save(cm.workingPath.home_path + 'vesselValImages.npy', final_images)
+  # np.save(cm.workingPath.home_path + 'vesselValMasks.npy', final_masks)
 
 else:
   pass

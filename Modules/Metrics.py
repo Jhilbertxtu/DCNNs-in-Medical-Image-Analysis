@@ -5,14 +5,12 @@ import numpy as np
 import Modules.Common_modules as cm
 import subprocess, os, shutil
 
-ITKToolsBinDir = os.path.join(cm.workingPath.working_path, '/ItkTools/bin/bin')
-
+ITKToolsBinDir = "/home/schen/ItkTools/bin/bin"
 
 def SegmentDist(File1, File2, OutDr):
 
   cm.mkdir(OutDr + '/Temp')
-  cmd1 = subprocess.getoutput(
-    ITKToolsBinDir + '/pxsegmentationdistance -in ' + File1 + ' ' + File2 + ' -car true -out ' + OutDr + '/Temp' + '/out.mhd')
+  cmd1 = subprocess.getoutput(    ITKToolsBinDir + '/pxsegmentationdistance -in ' + File1 + ' ' + File2 + ' -car true -out ' + OutDr + '/Temp' + '/out.mhd')
   cmd2 = subprocess.getoutput(
     ITKToolsBinDir + '/pxunaryimageoperator -in ' + OutDr + '/Temp' + '/outDIST.mhd -ops ABS -out ' + OutDr + '/Temp' + '/outDISTabs.mhd')
   cmd3 = subprocess.getoutput(
